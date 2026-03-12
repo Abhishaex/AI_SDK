@@ -6,11 +6,28 @@ export async function POST(req: Request) {
     const { prompt } = await req.json();
 
     const result = streamText({
-      model: openai("gpt-4.1-nano"),
+      model: openai("gpt-5-nano"),
       prompt,
     });
 
-    return result.toUIMessageStreamResponse();
+    return result.toUIMessageStreamResponse({
+      messageMetadata: ({ part }) => {
+        if (part.type === "finish" && "totalUsage" in part) {
+          const u = part.totalUsage as {
+            inputTokens?: number;
+            outputTokens?: number;
+            totalTokens?: number;
+          };
+          return {
+            usage: {
+              inputTokens: u.inputTokens ?? 0,
+              outputTokens: u.outputTokens ?? 0,
+              totalTokens: u.totalTokens ?? (u.inputTokens ?? 0) + (u.outputTokens ?? 0),
+            },
+          };
+        }
+      },
+    });
   } catch (error) {
     console.error("Stream API error:", error);
     return Response.json(

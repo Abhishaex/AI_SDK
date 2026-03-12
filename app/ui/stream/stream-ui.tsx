@@ -1,25 +1,95 @@
 "use client";
 
-import { useCompletion } from "@ai-sdk/react";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
+
+type Usage = {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+};
 
 export default function StreamUI() {
   const [prompt, setPrompt] = useState("");
-  const {
-    completion,
-    complete,
-    isLoading,
-    error,
-    stop,
-  } = useCompletion({
-    api: "/api/stream",
-  });
+  const [completion, setCompletion] = useState("");
+  const [usage, setUsage] = useState<Usage | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | undefined>(undefined);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prompt.trim()) return;
-    await complete(prompt);
-  };
+  const stop = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+  }, []);
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!prompt.trim()) return;
+
+      setIsLoading(true);
+      setError(undefined);
+      setCompletion("");
+      setUsage(null);
+      abortRef.current = new AbortController();
+
+      let result = "";
+      try {
+        const res = await fetch("/api/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+          signal: abortRef.current.signal,
+        });
+
+        if (!res.ok) throw new Error("Stream request failed");
+        if (!res.body) throw new Error("No response body");
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const payload = line.slice(6);
+              if (payload === "[DONE]") continue;
+              try {
+                const data = JSON.parse(payload);
+                if (data.type === "text-delta" && data.delta) {
+                  result += data.delta;
+                  setCompletion(result);
+                } else if (data.type === "finish" && data.messageMetadata?.usage) {
+                  const u = data.messageMetadata.usage;
+                  setUsage({
+                    inputTokens: u.inputTokens ?? 0,
+                    outputTokens: u.outputTokens ?? 0,
+                    totalTokens: u.totalTokens ?? 0,
+                  });
+                }
+              } catch {
+                // skip parse errors
+              }
+            }
+          }
+        }
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          setError(err instanceof Error ? err : new Error("Stream failed"));
+        }
+      } finally {
+        setIsLoading(false);
+        abortRef.current = null;
+      }
+    },
+    [prompt]
+  );
 
   return (
     <div className="flex flex-col min-h-screen bg-[#050505] text-white font-sans selection:bg-indigo-500/30">
@@ -173,10 +243,23 @@ export default function StreamUI() {
             </div>
 
             {completion && (
-              <div className="px-5 py-3 md:px-6 md:py-4 border-t border-white/5 bg-black/40 flex justify-end">
+              <div className="px-5 py-3 md:px-6 md:py-4 border-t border-white/5 bg-black/40 flex items-center justify-end gap-4">
+                {usage && (
+                  <div className="text-[10px] md:text-xs font-mono text-white/40 flex items-center gap-3 md:gap-4">
+                    <span>
+                      In: <span className="text-white/60">{usage.inputTokens}</span>
+                    </span>
+                    <span>
+                      Out: <span className="text-white/60">{usage.outputTokens}</span>
+                    </span>
+                    <span>
+                      Total: <span className="text-white/60">{usage.totalTokens}</span> tokens
+                    </span>
+                  </div>
+                )}
                 <button
                   onClick={() => navigator.clipboard.writeText(completion)}
-                  className="p-1.5 md:p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white"
+                  className="p-1.5 md:p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white shrink-0"
                   title="Copy to clipboard"
                 >
                   <svg
