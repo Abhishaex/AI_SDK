@@ -28,7 +28,7 @@ export const calculatorTool = tool({
           expression: `${a} × ${b}`,
         };
       case "divide":
-        if (b === 0) return { error: "Cannot divide by zero" };
+        if (b === 0) throw new Error("Cannot divide by zero");
         return {
           result: a / b,
           operation: "divide",
