@@ -11,10 +11,18 @@ import {
   Database, 
   Hash, 
   ArrowRight,
-  Code2
+  Code2,
+  Wrench
 } from "lucide-react";
 
 const cards = [
+  { 
+    title: "Tools Chat", 
+    description: "Chat with AI that can use tools (weather, calculator, date/time).", 
+    href: "/tools-chat", 
+    icon: Wrench,
+    color: "bg-amber-500"
+  },
   { 
     title: "AI Chat", 
     description: "Standard chat interface with AI SDK streaming.", 
