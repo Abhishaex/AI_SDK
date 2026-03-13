@@ -66,7 +66,7 @@ export default function ChatUI() {
       {/* Chat Messages */}
       <main 
         ref={scrollRef}
-        className="relative z-10 flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar pb-32"
+        className="relative z-10 flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar pb-10"
       >
         {(messages || []).length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-6 max-w-sm mx-auto opacity-40">
@@ -145,7 +145,7 @@ export default function ChatUI() {
       </main>
 
       {/* Input Area */}
-      <footer className="fixed bottom-0 left-0 right-0 z-20 p-4 md:p-6 bg-gradient-to-t from-[#050505] via-[#050505] to-transparent">
+      <footer className="relative z-20 p-4 md:p-6 bg-[#050505] border-t border-white/5">
         <form 
           onSubmit={handleSubmit}
           className="max-w-3xl mx-auto relative group"
