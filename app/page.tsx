@@ -4,6 +4,7 @@ import Link from "next/link";
 import { 
   MessageSquare, 
   Image as ImageIcon, 
+  ImagePlus,
   Zap, 
   List, 
   Database, 
@@ -26,6 +27,13 @@ const cards = [
     href: "/multi-modal-chat", 
     icon: ImageIcon,
     color: "bg-purple-500"
+  },
+  { 
+    title: "Generate Image", 
+    description: "Create images from text using DALL·E (1024×1024).", 
+    href: "/generate-image", 
+    icon: ImagePlus,
+    color: "bg-amber-500"
   },
   { 
     title: "Completions", 
