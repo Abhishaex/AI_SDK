@@ -1,41 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import { experimental_useObject as useObject } from "@ai-sdk/react";
+import { dishRecipeSchema } from "@/app/api/structured-data/schema";
 import type { DishRecipe } from "@/app/api/structured-data/schema";
+
+/** Safely get displayable recipe from partial streamed object */
+function getRecipeDisplay(recipe: Partial<DishRecipe> | undefined): Partial<DishRecipe> | null {
+  if (!recipe || typeof recipe !== "object") return null;
+  return recipe;
+}
 
 export default function StructuredDataUI() {
   const [prompt, setPrompt] = useState("");
-  const [recipe, setRecipe] = useState<DishRecipe | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const { object: recipe, submit, isLoading, error, stop } = useObject({
+    api: "/api/structured-data",
+    schema: dishRecipeSchema,
+  });
+
+  const displayRecipe = getRecipeDisplay(recipe);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setRecipe(null);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/structured-data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim() || "a classic recipe" }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error ?? "Request failed");
-        return;
-      }
-
-      setRecipe(data.recipe);
-    } catch (err) {
-      console.error("Error fetching recipe:", err);
-      setError("An error occurred while generating the recipe.");
-    } finally {
-      setIsLoading(false);
-    }
+    submit({ prompt: prompt.trim() || "a classic recipe" });
   };
 
   return (
@@ -84,18 +72,28 @@ export default function StructuredDataUI() {
                 className="flex-1 w-full bg-transparent border-none focus:ring-0 resize-none text-base md:text-lg text-white/90 placeholder:text-white/20 leading-relaxed font-light custom-scrollbar min-h-[120px]"
               />
 
-              <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-white/5">
+              <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-white/5 gap-2">
                 <span className="text-[10px] text-white/30 font-mono">
                   {prompt.length} characters
                 </span>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="group relative px-4 py-2 md:px-6 md:py-3 rounded-xl bg-amber-500 text-black font-semibold overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed"
-                >
-                  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
-                  <span className="relative flex items-center gap-2 text-sm md:text-base">
-                    {isLoading ? "Cooking..." : "Generate recipe"}
+                <div className="flex gap-2">
+                  {isLoading && (
+                    <button
+                      type="button"
+                      onClick={stop}
+                      className="px-3 py-2 rounded-xl border border-white/20 text-white/80 text-sm hover:bg-white/10"
+                    >
+                      Stop
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="group relative px-4 py-2 md:px-6 md:py-3 rounded-xl bg-amber-500 text-black font-semibold overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed"
+                  >
+                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                    <span className="relative flex items-center gap-2 text-sm md:text-base">
+                      {isLoading ? "Streaming..." : "Generate recipe"}
                     {!isLoading && (
                       <svg
                         width="14"
@@ -116,6 +114,7 @@ export default function StructuredDataUI() {
                     )}
                   </span>
                 </button>
+                </div>
               </div>
             </form>
           </div>
@@ -132,11 +131,11 @@ export default function StructuredDataUI() {
             <div className="flex-1 p-5 md:p-8 overflow-y-auto custom-scrollbar">
               {error && (
                 <div className="rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 px-4 py-3 text-sm">
-                  {error}
+                  {error.message}
                 </div>
               )}
 
-              {isLoading && (
+              {isLoading && !displayRecipe?.name && (
                 <div className="flex flex-col gap-4 animate-pulse">
                   <div className="h-8 w-3/4 bg-white/5 rounded-full" />
                   <div className="h-4 w-full bg-white/5 rounded-full" />
@@ -148,28 +147,41 @@ export default function StructuredDataUI() {
                 </div>
               )}
 
-              {!isLoading && recipe && (
+              {displayRecipe && (
+                (typeof displayRecipe.name === "string" ||
+                  typeof displayRecipe.description === "string" ||
+                  (Array.isArray(displayRecipe.ingredients) && displayRecipe.ingredients.length > 0) ||
+                  (Array.isArray(displayRecipe.instructions) && displayRecipe.instructions.length > 0) ||
+                  typeof displayRecipe.prepTimeMinutes === "number" ||
+                  typeof displayRecipe.cookTimeMinutes === "number" ||
+                  typeof displayRecipe.servings === "number") && (
                 <article className="space-y-6">
                   <div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-white">
-                      {recipe.name}
-                    </h3>
-                    {recipe.cuisine && (
+                    {typeof displayRecipe.name === "string" && (
+                      <h3 className="text-2xl md:text-3xl font-bold text-white">
+                        {displayRecipe.name}
+                      </h3>
+                    )}
+                    {typeof displayRecipe.cuisine === "string" && displayRecipe.cuisine && (
                       <span className="inline-block mt-1 text-xs font-medium uppercase tracking-wider text-amber-400/90">
-                        {recipe.cuisine}
+                        {displayRecipe.cuisine}
                       </span>
                     )}
-                    <p className="mt-2 text-white/70 text-sm md:text-base leading-relaxed">
-                      {recipe.description}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-white/50">
-                      <span>Prep: {recipe.prepTimeMinutes} min</span>
-                      <span>Cook: {recipe.cookTimeMinutes} min</span>
-                      <span>Servings: {recipe.servings}</span>
-                    </div>
-                    {recipe.tags && recipe.tags.length > 0 && (
+                    {typeof displayRecipe.description === "string" && (
+                      <p className="mt-2 text-white/70 text-sm md:text-base leading-relaxed">
+                        {displayRecipe.description}
+                      </p>
+                    )}
+                    {(typeof displayRecipe.prepTimeMinutes === "number" || typeof displayRecipe.cookTimeMinutes === "number" || typeof displayRecipe.servings === "number") && (
+                      <div className="mt-3 flex flex-wrap gap-3 text-xs text-white/50">
+                        {typeof displayRecipe.prepTimeMinutes === "number" && <span>Prep: {displayRecipe.prepTimeMinutes} min</span>}
+                        {typeof displayRecipe.cookTimeMinutes === "number" && <span>Cook: {displayRecipe.cookTimeMinutes} min</span>}
+                        {typeof displayRecipe.servings === "number" && <span>Servings: {displayRecipe.servings}</span>}
+                      </div>
+                    )}
+                    {Array.isArray(displayRecipe.tags) && displayRecipe.tags.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {recipe.tags.map((tag) => (
+                        {displayRecipe.tags.map((tag) => (
                           <span
                             key={tag}
                             className="px-2 py-0.5 rounded-full bg-white/10 text-white/60 text-[10px] uppercase tracking-wide"
@@ -181,51 +193,57 @@ export default function StructuredDataUI() {
                     )}
                   </div>
 
-                  <div>
-                    <h4 className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-2">
-                      Ingredients
-                    </h4>
-                    <ul className="space-y-1.5">
-                      {recipe.ingredients.map((ing, i) => (
-                        <li
-                          key={i}
-                          className="text-white/80 text-sm flex gap-2"
-                        >
-                          <span className="text-amber-400/80">•</span>
-                          {(ing.amount || ing.unit) ? (
-                            <span>
-                              <span className="text-white/50">
-                                {[ing.amount, ing.unit].filter(Boolean).join(" ")}{" "}
-                              </span>
-                              {ing.name}
-                            </span>
-                          ) : (
-                            <span>{ing.name}</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  {Array.isArray(displayRecipe.ingredients) && displayRecipe.ingredients.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-2">
+                        Ingredients
+                      </h4>
+                      <ul className="space-y-1.5">
+                        {displayRecipe.ingredients.map((ing, i) => (
+                          <li
+                            key={i}
+                            className="text-white/80 text-sm flex gap-2"
+                          >
+                            <span className="text-amber-400/80">•</span>
+                            {ing && typeof ing === "object" && "name" in ing ? (
+                              (ing.amount || ing.unit) ? (
+                                <span>
+                                  <span className="text-white/50">
+                                    {[ing.amount, ing.unit].filter(Boolean).join(" ")}{" "}
+                                  </span>
+                                  {String(ing.name)}
+                                </span>
+                              ) : (
+                                <span>{String(ing.name)}</span>
+                              )
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                  <div>
-                    <h4 className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-2">
-                      Instructions
-                    </h4>
-                    <ol className="space-y-2 list-decimal list-inside">
-                      {recipe.instructions.map((step, i) => (
-                        <li
-                          key={i}
-                          className="text-white/80 text-sm leading-relaxed pl-1"
-                        >
-                          {step}
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
+                  {Array.isArray(displayRecipe.instructions) && displayRecipe.instructions.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold uppercase tracking-widest text-white/50 mb-2">
+                        Instructions
+                      </h4>
+                      <ol className="space-y-2 list-decimal list-inside">
+                        {displayRecipe.instructions.map((step, i) => (
+                          <li
+                            key={i}
+                            className="text-white/80 text-sm leading-relaxed pl-1"
+                          >
+                            {typeof step === "string" ? step : "…"}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                 </article>
-              )}
+              ))}
 
-              {!isLoading && !recipe && !error && (
+              {!isLoading && !displayRecipe && !error && (
                 <div className="h-full flex flex-col items-center justify-center text-center space-y-3 md:space-y-4 opacity-20">
                   <svg
                     width="32"
