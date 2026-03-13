@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     const result = streamText({
       model: openai("gpt-4o"),
       system:
-        "You are a helpful AI assistant that can analyze images. When the user sends an image, describe what you see, answer questions about it, extract text if present, or analyze it in any way the user requests. Be concise but thorough.",
+        "You are a helpful AI assistant that can analyze images and PDF documents. When the user sends an image, describe what you see, answer questions about it, extract text if present, or analyze it in any way the user requests. When the user sends a PDF, summarize it, answer questions about its content, extract key information, or analyze tables and layout. Be concise but thorough.",
       messages: modelMessages,
     });
 

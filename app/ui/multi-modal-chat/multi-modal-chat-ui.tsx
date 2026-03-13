@@ -7,24 +7,28 @@ import Link from "next/link";
 
 async function convertFilesToDataURLs(
   files: File[]
-): Promise<{ type: "file"; mediaType: string; url: string }[]> {
+): Promise<{ type: "file"; mediaType: string; url: string; filename?: string }[]> {
   return Promise.all(
     files.map(
       (file) =>
-        new Promise<{ type: "file"; mediaType: string; url: string }>(
-          (resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              resolve({
-                type: "file",
-                mediaType: file.type,
-                url: reader.result as string,
-              });
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          }
-        )
+        new Promise<{
+          type: "file";
+          mediaType: string;
+          url: string;
+          filename?: string;
+        }>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            resolve({
+              type: "file",
+              mediaType: file.type,
+              url: reader.result as string,
+              filename: file.name,
+            });
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        })
     )
   );
 }
@@ -41,6 +45,12 @@ export default function MultiModalChatUI() {
     );
     setPendingPreviews((prev) => [...prev, ...urls]);
   };
+
+  const isPdf = (file: File) => file.type === "application/pdf";
+  const isPdfMediaType = (mediaType?: string) =>
+    mediaType === "application/pdf";
+  const isPdfDataUrl = (url: string) =>
+    typeof url === "string" && url.startsWith("data:application/pdf");
 
   const revokePreviewUrl = (index: number) => {
     setPendingPreviews((prev) => {
@@ -143,7 +153,7 @@ export default function MultiModalChatUI() {
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-[10px] text-white/40 font-medium uppercase tracking-widest">
-                GPT-4o · Vision
+                GPT-4o · Images & PDFs
               </span>
             </div>
           </div>
@@ -187,11 +197,11 @@ export default function MultiModalChatUI() {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-white">
-                Upload an image to analyze
+                Upload an image or PDF to analyze
               </h2>
               <p className="text-sm font-light mt-2 leading-relaxed">
-                Attach an image and ask questions. Describe it, extract text,
-                or get insights.
+                Attach images or PDFs and ask questions. Describe content,
+                extract text, or get insights.
               </p>
             </div>
           </div>
@@ -250,10 +260,18 @@ export default function MultiModalChatUI() {
                               : "data" in part && typeof (part as { data?: string }).data === "string"
                                 ? (part as { data: string }).data
                                 : null;
+                          const mediaType = part.mediaType;
+                          const filename =
+                            "filename" in part && typeof part.filename === "string"
+                              ? part.filename
+                              : "document.pdf";
+                          const isPdfPart =
+                            isPdfMediaType(mediaType) ||
+                            (typeof src === "string" && isPdfDataUrl(src));
                           if (
                             src &&
                             (part.mediaType?.startsWith("image/") ||
-                              src.startsWith("data:image/"))
+                              (typeof src === "string" && src.startsWith("data:image/")))
                           ) {
                             return (
                               <div key={i} className="rounded-xl overflow-hidden border border-white/10">
@@ -262,6 +280,40 @@ export default function MultiModalChatUI() {
                                   alt={`Attachment ${i + 1}`}
                                   className="max-w-full max-h-64 object-contain"
                                 />
+                              </div>
+                            );
+                          }
+                          if (src && isPdfPart) {
+                            return (
+                              <div
+                                key={i}
+                                className="rounded-xl border border-white/10 bg-white/5 p-4 flex items-center gap-3"
+                              >
+                                <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center shrink-0">
+                                  <svg
+                                    className="w-5 h-5 text-red-400"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                  >
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2 5 5h-5V4zM8 13h2v5H8v-5zm4-2h2v7h-2v-7zm4 4h2v3h-2v-3z" />
+                                  </svg>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium text-white/90 truncate">
+                                    {filename}
+                                  </p>
+                                  <p className="text-[10px] text-white/40">
+                                    PDF document
+                                  </p>
+                                </div>
+                                <a
+                                  href={src}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs font-medium text-emerald-400 hover:text-emerald-300 shrink-0"
+                                >
+                                  View
+                                </a>
                               </div>
                             );
                           }
@@ -316,8 +368,17 @@ export default function MultiModalChatUI() {
                       className="w-20 h-20 md:w-24 md:h-24 object-cover block min-w-[5rem] min-h-[5rem]"
                     />
                   ) : (
-                    <div className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center bg-white/5 min-w-[5rem] min-h-[5rem]">
-                      <span className="text-[10px] text-white/40 truncate px-2 max-w-full">
+                    <div className="w-20 h-20 md:w-24 md:h-24 flex flex-col items-center justify-center gap-1 bg-white/5 min-w-[5rem] min-h-[5rem]">
+                      {isPdf(file) ? (
+                        <svg
+                          className="w-8 h-8 text-red-400/80 shrink-0"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2 5 5h-5V4zM8 13h2v5H8v-5zm4-2h2v7h-2v-7zm4 4h2v3h-2v-3z" />
+                        </svg>
+                      ) : null}
+                      <span className="text-[10px] text-white/40 truncate px-2 max-w-full text-center">
                         {file.name}
                       </span>
                     </div>
@@ -348,7 +409,7 @@ export default function MultiModalChatUI() {
           <div className="relative flex items-center bg-zinc-900/90 border border-white/10 rounded-2xl backdrop-blur-xl overflow-hidden p-1.5">
             <input
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf"
               multiple
               ref={fileInputRef}
               onChange={handleFileChange}
@@ -358,7 +419,7 @@ export default function MultiModalChatUI() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="p-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors"
-              title="Upload image"
+              title="Upload image or PDF"
             >
               <svg
                 width="20"
@@ -378,7 +439,7 @@ export default function MultiModalChatUI() {
             <input
               value={input ?? ""}
               onChange={handleInputChange}
-              placeholder="Describe or ask about your image..."
+              placeholder="Describe or ask about your image or PDF..."
               className="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 text-sm md:text-base text-white/90 placeholder:text-white/20"
             />
             <button
@@ -406,7 +467,7 @@ export default function MultiModalChatUI() {
           </div>
         </form>
         <p className="text-[10px] text-center mt-3 text-white/20 font-light tracking-wide italic">
-          Upload images and ask questions. Analysis is powered by GPT-4o.
+          Upload images or PDFs and ask questions. Analysis is powered by GPT-4o.
         </p>
       </footer>
 
