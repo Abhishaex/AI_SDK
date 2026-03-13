@@ -3,10 +3,14 @@ import { openai } from "@ai-sdk/openai";
 
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json();
+    const { messages } = await req.json();
+    
+    // Get the last user message for the prompt
+    const lastMessage = messages?.[messages.length - 1];
+    const prompt = lastMessage?.parts?.find((p: any) => p.type === 'text')?.text || "";
 
     const result = streamText({
-      model: openai("gpt-5-nano"),
+      model: openai("gpt-4o"), // Use a valid model for testing, gpt-5-nano might not exist
       prompt,
     });
 

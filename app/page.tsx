@@ -1,5 +1,5 @@
-import CompletionsUI from "./ui/completions/completions-ui";
+import ChatUI from "./ui/chat/chat-ui";
 
 export default function Home() {
-  return <CompletionsUI />;
+  return <ChatUI />;
 }
