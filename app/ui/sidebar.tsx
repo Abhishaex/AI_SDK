@@ -6,6 +6,7 @@ import {
   MessageSquare, 
   Image as ImageIcon, 
   ImagePlus,
+  Mic,
   Zap, 
   List, 
   Database, 
@@ -23,6 +24,7 @@ import { useSidebar } from "./sidebar-provider";
 const navItems = [
   { name: "Chat", href: "/chat", icon: MessageSquare },
   { name: "Multi-modal Chat", href: "/multi-modal-chat", icon: ImageIcon },
+  { name: "Transcribe Audio", href: "/transcribe-audio", icon: Mic },
   { name: "Generate Image", href: "/generate-image", icon: ImagePlus },
   { name: "Completions", href: "/completions", icon: Zap },
   { name: "Stream", href: "/stream", icon: Zap },

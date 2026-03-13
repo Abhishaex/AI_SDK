@@ -5,6 +5,7 @@ import {
   MessageSquare, 
   Image as ImageIcon, 
   ImagePlus,
+  Mic,
   Zap, 
   List, 
   Database, 
@@ -27,6 +28,13 @@ const cards = [
     href: "/multi-modal-chat", 
     icon: ImageIcon,
     color: "bg-purple-500"
+  },
+  { 
+    title: "Transcribe Audio", 
+    description: "Convert speech to text using OpenAI Whisper.", 
+    href: "/transcribe-audio", 
+    icon: Mic,
+    color: "bg-violet-500"
   },
   { 
     title: "Generate Image", 
