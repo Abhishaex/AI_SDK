@@ -12,7 +12,8 @@ import {
   Hash, 
   ArrowRight,
   Code2,
-  Wrench
+  Wrench,
+  Layers
 } from "lucide-react";
 
 const cards = [
@@ -22,6 +23,13 @@ const cards = [
     href: "/tools-chat", 
     icon: Wrench,
     color: "bg-amber-500"
+  },
+  { 
+    title: "Multiple Tools Chat", 
+    description: "AI calls multiple tools in one response — weather, calc, time, random, joke.", 
+    href: "/multiple-tools", 
+    icon: Layers,
+    color: "bg-indigo-500"
   },
   { 
     title: "AI Chat", 
