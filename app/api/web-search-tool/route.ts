@@ -1,7 +1,6 @@
 import { convertToModelMessages, streamText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 import type { UIMessage } from "ai";
-import { chatTools } from "../tools";
 
 export async function POST(req: Request) {
   try {
@@ -9,10 +8,16 @@ export async function POST(req: Request) {
 
     const result = streamText({
       model: openai("gpt-5-nano"),
-      system:
-        "You are a helpful assistant. Use the available tools when relevant: weather, calculator, or getCurrentDateTime. Call tools when the user asks about weather, math calculations, or the current date/time.",
+      system: `You are a helpful assistant with access to web search.
+
+When the user asks about current events, news, recent developments, or any information that may change over time, use the web_search_preview tool to find up-to-date information.
+Synthesize the search results into a clear, accurate response. Cite sources when relevant.`,
       messages: await convertToModelMessages(messages),
-      tools: chatTools,
+      tools: {
+        web_search_preview: openai.tools.webSearchPreview({
+          searchContextSize: "medium",
+        }),
+      },
       stopWhen: stepCountIs(5),
     });
 
@@ -35,11 +40,13 @@ export async function POST(req: Request) {
       },
     });
   } catch (error) {
-    console.error("Chat with tools API error:", error);
+    console.error("Web search tool API error:", error);
     return Response.json(
       {
         error:
-          error instanceof Error ? error.message : "Chat with tools failed",
+          error instanceof Error
+            ? error.message
+            : "Web search chat failed",
       },
       { status: 500 }
     );

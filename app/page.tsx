@@ -13,7 +13,8 @@ import {
   ArrowRight,
   Code2,
   Wrench,
-  Layers
+  Layers,
+  Search
 } from "lucide-react";
 
 const cards = [
@@ -30,6 +31,13 @@ const cards = [
     href: "/multiple-tools", 
     icon: Layers,
     color: "bg-indigo-500"
+  },
+  { 
+    title: "Web Search Tool", 
+    description: "Search the web with AI. Ask about current events, news, or any topic.", 
+    href: "/web-search-tool", 
+    icon: Search,
+    color: "bg-teal-500"
   },
   { 
     title: "AI Chat", 
