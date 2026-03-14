@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Spinner } from "../loader";
 
 export default function CompletionsUI() {
   const [prompt, setPrompt] = useState("");
@@ -113,12 +114,7 @@ export default function CompletionsUI() {
             
             <div className="flex-1 p-5 md:p-8 overflow-y-auto custom-scrollbar">
               {isLoading ? (
-                <div className="flex flex-col gap-4 animate-pulse">
-                  <div className="h-3 md:h-4 w-3/4 bg-white/5 rounded-full" />
-                  <div className="h-3 md:h-4 w-full bg-white/5 rounded-full" />
-                  <div className="h-3 md:h-4 w-5/6 bg-white/5 rounded-full" />
-                  <div className="h-3 md:h-4 w-2/3 bg-white/5 rounded-full" />
-                </div>
+                <Spinner />
               ) : result ? (
                 <div className="prose prose-invert max-w-none">
                   <p className="text-sm md:text-lg leading-relaxed text-white/80 font-light whitespace-pre-wrap">

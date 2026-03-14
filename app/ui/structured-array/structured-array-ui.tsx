@@ -3,15 +3,28 @@
 import { useState } from "react";
 import { experimental_useObject as useObject } from "@ai-sdk/react";
 import { pokemonListSchema } from "@/app/api/structured-array/schema";
-import type { PokemonList } from "@/app/api/structured-array/schema";
+import type { PokemonEntry } from "@/app/api/structured-array/schema";
+import { Spinner } from "../loader";
+
+type DisplayablePokemon = Pick<PokemonEntry, "name" | "number"> & {
+  types?: string[];
+  description?: string;
+};
 
 /** Safely get displayable Pokémon from partial streamed object */
-function getPokemonItems(list: Partial<PokemonList> | undefined) {
+function getPokemonItems(list: { pokemon?: unknown[] } | undefined): DisplayablePokemon[] {
   if (!list?.pokemon || !Array.isArray(list.pokemon)) return [];
-  return list.pokemon.filter(
-    (p): p is { name: string; number: number; types?: string[]; description?: string } =>
-      p != null && typeof p.name === "string" && typeof p.number === "number"
-  );
+  const result: DisplayablePokemon[] = [];
+  for (const p of list.pokemon) {
+    if (
+      p != null &&
+      typeof (p as { name?: unknown }).name === "string" &&
+      typeof (p as { number?: unknown }).number === "number"
+    ) {
+      result.push(p as DisplayablePokemon);
+    }
+  }
+  return result;
 }
 
 export default function StructuredArrayUI() {
@@ -139,14 +152,7 @@ export default function StructuredArrayUI() {
               )}
 
               {isLoading && (
-                <div className="flex flex-col gap-4 animate-pulse">
-                  <div className="h-12 w-3/4 bg-white/5 rounded-xl" />
-                  <div className="h-4 w-full bg-white/5 rounded-full" />
-                  <div className="h-4 w-5/6 bg-white/5 rounded-full" />
-                  <div className="h-12 w-3/4 bg-white/5 rounded-xl mt-4" />
-                  <div className="h-4 w-full bg-white/5 rounded-full" />
-                  <div className="h-4 w-2/3 bg-white/5 rounded-full" />
-                </div>
+                <Spinner />
               )}
 
               {(list || isLoading) && pokemon.length > 0 && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Spinner } from "../loader";
 
 type SentimentValue = "positive" | "negative" | "neutral";
 
@@ -155,10 +156,7 @@ export default function StructuredEnumUI() {
               )}
 
               {isLoading && (
-                <div className="flex flex-col items-center gap-4 animate-pulse">
-                  <div className="w-24 h-24 rounded-2xl bg-white/10" />
-                  <div className="h-4 w-32 bg-white/10 rounded-full" />
-                </div>
+                <Spinner />
               )}
 
               {!isLoading && sentiment && style && (

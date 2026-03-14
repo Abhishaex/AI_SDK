@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Volume2, Download, Loader2, Play, Pause } from "lucide-react";
+import { Volume2, Download, Play, Pause } from "lucide-react";
+import { Spinner } from "../loader";
 
 const VOICES = [
   { id: "alloy", label: "Alloy" },
@@ -152,10 +153,7 @@ export default function GenerateSpeechUI() {
                 className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-black font-semibold hover:from-amber-400 hover:to-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {isLoading ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Generating...
-                  </>
+                  <Spinner className="p-0 h-4 w-4" />
                 ) : (
                   <>
                     <Volume2 size={18} />
@@ -199,17 +197,12 @@ export default function GenerateSpeechUI() {
             )}
           </div>
           <div className="flex-1 p-4 sm:p-6 flex items-center justify-center min-h-[320px] overflow-auto">
-            {isLoading && (
-              <div className="flex flex-col items-center gap-4 text-white/50">
-                <div className="w-16 h-16 rounded-2xl bg-white/10 animate-pulse" />
-                <div className="flex gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-500/60 animate-bounce [animation-delay:0ms]" />
-                  <span className="w-2 h-2 rounded-full bg-amber-500/60 animate-bounce [animation-delay:150ms]" />
-                  <span className="w-2 h-2 rounded-full bg-amber-500/60 animate-bounce [animation-delay:300ms]" />
+              {isLoading && (
+                <div className="flex flex-col items-center gap-4 text-white/50">
+                  <Spinner />
+                  <p className="text-sm">Creating your audio...</p>
                 </div>
-                <p className="text-sm">Creating your audio...</p>
-              </div>
-            )}
+              )}
             {!isLoading && audioUrl && (
               <div className="flex flex-col items-center gap-4 w-full max-w-md">
                 <div className="w-24 h-24 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">

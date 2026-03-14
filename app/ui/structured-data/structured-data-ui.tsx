@@ -4,11 +4,12 @@ import { useState } from "react";
 import { experimental_useObject as useObject } from "@ai-sdk/react";
 import { dishRecipeSchema } from "@/app/api/structured-data/schema";
 import type { DishRecipe } from "@/app/api/structured-data/schema";
+import { Spinner } from "../loader";
 
 /** Safely get displayable recipe from partial streamed object */
-function getRecipeDisplay(recipe: Partial<DishRecipe> | undefined): Partial<DishRecipe> | null {
+function getRecipeDisplay(recipe: unknown): Partial<DishRecipe> | null {
   if (!recipe || typeof recipe !== "object") return null;
-  return recipe;
+  return recipe as Partial<DishRecipe>;
 }
 
 export default function StructuredDataUI() {
@@ -136,15 +137,7 @@ export default function StructuredDataUI() {
               )}
 
               {isLoading && !displayRecipe?.name && (
-                <div className="flex flex-col gap-4 animate-pulse">
-                  <div className="h-8 w-3/4 bg-white/5 rounded-full" />
-                  <div className="h-4 w-full bg-white/5 rounded-full" />
-                  <div className="h-4 w-5/6 bg-white/5 rounded-full" />
-                  <div className="h-4 w-2/3 bg-white/5 rounded-full" />
-                  <div className="mt-6 h-4 w-full bg-white/5 rounded-full" />
-                  <div className="h-4 w-full bg-white/5 rounded-full" />
-                  <div className="h-4 w-4/5 bg-white/5 rounded-full" />
-                </div>
+                <Spinner />
               )}
 
               {displayRecipe && (

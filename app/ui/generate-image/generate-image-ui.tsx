@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ImageIcon, Download, Loader2, Trash2 } from "lucide-react";
+import { ImageIcon, Download, Trash2 } from "lucide-react";
+import { Spinner } from "../loader";
 
 type Message =
   | { id: string; role: "user"; content: string }
@@ -213,13 +214,8 @@ export default function GenerateImageUI() {
               <ImageIcon size={16} className="text-white" />
             </div>
             <div className="p-4 md:p-5 rounded-2xl md:rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md shadow-xl rounded-tl-none">
-              <div className="flex flex-col items-center gap-4 py-4">
-                <div className="w-24 h-24 rounded-2xl bg-white/10 animate-pulse" />
-                <div className="flex gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-500/60 animate-bounce [animation-delay:0ms]" />
-                  <span className="w-2 h-2 rounded-full bg-amber-500/60 animate-bounce [animation-delay:150ms]" />
-                  <span className="w-2 h-2 rounded-full bg-amber-500/60 animate-bounce [animation-delay:300ms]" />
-                </div>
+              <div className="flex flex-col items-center gap-4 py-8">
+                <Spinner />
                 <p className="text-sm text-white/50">Creating your image...</p>
               </div>
             </div>
@@ -255,7 +251,7 @@ export default function GenerateImageUI() {
               className="p-3 rounded-xl bg-amber-500 text-black hover:bg-amber-400 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 disabled:grayscale"
             >
               {isLoading ? (
-                <Loader2 size={18} className="animate-spin" />
+                <Spinner className="p-0 h-4 w-4" />
               ) : (
                 <ImageIcon size={18} />
               )}
