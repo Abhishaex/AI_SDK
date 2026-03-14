@@ -192,7 +192,7 @@ export default function ToolsChatUI() {
 
       <header className="relative z-20 flex items-center justify-between px-6 lg:px-8 py-4 border-b border-white/5 backdrop-blur-md bg-black/40">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20 lg:ml-0 ml-12">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
             <Wrench className="h-5 w-5 text-white" />
           </div>
           <div>

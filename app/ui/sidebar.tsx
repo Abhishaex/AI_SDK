@@ -41,15 +41,34 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button - Only visible when sidebar is closed and on mobile/desktop as a floating button or in header */}
+      <style jsx global>{`
+        /* Shift all headers' first child when sidebar is closed on mobile/desktop */
+        .sidebar-closed header > div:first-child {
+          padding-left: 3.5rem !important;
+          transition: padding-left 0.3s ease-in-out;
+        }
+        .sidebar-open header > div:first-child {
+          padding-left: 0 !important;
+          transition: padding-left 0.3s ease-in-out;
+        }
+        /* Dashboard specific fix */
+        .sidebar-closed .dashboard-header {
+          padding-left: 3.5rem !important;
+          transition: padding-left 0.3s ease-in-out;
+        }
+      `}</style>
+
       <button 
         onClick={toggle}
         className={`
-          fixed top-4 left-4 z-50 p-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg transition-all duration-300
-          ${isOpen ? "opacity-0 pointer-events-none -translate-x-full" : "opacity-100 translate-x-0"}
+          fixed z-50 p-2 rounded-lg transition-all duration-300 flex items-center justify-center
+          ${isOpen 
+            ? "top-4 left-4 bg-transparent text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 lg:left-[210px] lg:top-[20px]" 
+            : "top-4 left-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 shadow-lg text-zinc-600 dark:text-zinc-400 hover:scale-110 active:scale-95 ring-1 ring-black/5 dark:ring-white/5"}
         `}
+        title={isOpen ? "Close Sidebar" : "Open Sidebar"}
       >
-        <Menu size={20} className="text-zinc-600 dark:text-zinc-400" />
+        {isOpen ? <PanelLeftClose size={20} /> : <Menu size={22} />}
       </button>
 
       {/* Sidebar Overlay (Mobile) */}
@@ -77,13 +96,8 @@ export function Sidebar() {
                 AI Studio
               </span>
             </div>
-            <button 
-              onClick={toggle}
-              className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors text-zinc-500"
-              title="Close sidebar"
-            >
-              <PanelLeftClose size={18} />
-            </button>
+            {/* Empty space for the button that will be positioned here */}
+            <div className="w-8" />
           </div>
 
           <nav className="flex-1 space-y-1">

@@ -28,6 +28,16 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.documentElement.classList.add("sidebar-open");
+      document.documentElement.classList.remove("sidebar-closed");
+    } else {
+      document.documentElement.classList.add("sidebar-closed");
+      document.documentElement.classList.remove("sidebar-open");
+    }
+  }, [isOpen]);
+
   const toggle = () => setIsOpen((prev) => !prev);
 
   return (

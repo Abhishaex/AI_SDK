@@ -106,8 +106,8 @@ const cards = [
 
 export default function Home() {
   return (
-    <div className="max-w-5xl mx-auto space-y-10 py-8 px-4">
-      <div className="space-y-3 mt-4">
+    <div className="max-w-5xl mx-auto space-y-10 py-8 px-4 font-sans">
+      <div className="space-y-3 mt-4 dashboard-header">
         <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
           AI SDK <span className="text-blue-500">Explorer</span>
         </h1>
